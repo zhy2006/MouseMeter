@@ -1,83 +1,94 @@
 # MouseMeter
 
-macOS 菜单栏鼠标电量 / DPI 查看工具。
+A macOS menu bar app for monitoring mouse battery levels and DPI, built with Swift and SwiftUI.
 
-- **菜单栏**：电池图标 + 剩余电量百分比（可选显示 DPI），点击弹出所有鼠标的概览
-- **主界面**：电量环形仪表、当前 DPI 及其在传感器范围内的位置、设备信息；支持深色模式
-- 低电量通知、离线设备保留上次读数、登录时启动、可调刷新间隔
+[简体中文](docs/README.zh-CN.md)
 
-## 支持的设备
+## Features
 
-| 数据源 | 设备 | 电量 | DPI |
+- Menu bar battery icon and optional battery percentage and DPI display.
+- A quick overview of connected mice, with a selectable device for the menu bar.
+- A main window with battery gauges, current DPI, sensor range, and device details, with dark mode support.
+- Configurable low battery notifications (20% by default).
+- Automatic refresh every 15 seconds to 5 minutes (1 minute by default), and last known readings for offline devices.
+- Launch at login.
+
+## Device support
+
+| Data source | Devices | Battery | DPI |
 | --- | --- | --- | --- |
-| `LogitechHIDPPProvider` | 罗技 HID++ 2.0 设备：Lightspeed / Unifying / Bolt 接收器、有线、蓝牙直连 | ✅ (0x1004 / 0x1000 / 0x1001) | ✅ (0x2202 / 0x2201) |
-| `BluetoothBatteryProvider` | 妙控鼠标及通过系统蓝牙电量服务上报电量的鼠标 | ✅ | ❌ |
+| Logitech HID++ 2.0 | Compatible Logitech mice over Lightspeed, Unifying, or Bolt receivers, USB, or direct Bluetooth | Yes, via `0x1004`, `0x1000`, or `0x1001` | Yes, via `0x2202` or `0x2201` |
+| System Bluetooth battery data | Magic Mouse and other mice exposing battery information through macOS IORegistry | Yes | No |
 
-## 构建与运行
+Available readings depend on the features exposed by each device and connection. Protocol support does not guarantee compatibility with every model. MouseMeter displays DPI; it does not change it. The current app interface is in Simplified Chinese.
 
-需要 macOS 15+、Xcode 16+（Swift 6 工具链）。
+## Requirements
+
+- macOS 15 or later.
+- Xcode 16 or later with a Swift 6 toolchain for building from source.
+- A code signing identity available in your local keychain when using the packaging scripts.
+
+## Build and install
+
+Run these commands from the project root:
 
 ```bash
-make dmg      # 生成 build/MouseMeter-1.0.0.dmg（默认目标，亦可直接 make）
-make app      # 生成 build/MouseMeter.app（通用二进制，Flick 证书签名）
-make install  # 构建并安装到 /Applications
-make clean    # 清理打包产物
-
-swift run MouseMeter            # 开发时直接运行（无 bundle，通知与登录项不可用）
-swift run MouseMeter --dump     # 读取一次并在终端打印所有设备，调试协议用
+make dmg      # Default target; creates build/MouseMeter-1.0.0.dmg
+make app      # Creates build/MouseMeter.app
+make install  # Builds and copies the app to /Applications
+make clean    # Removes build/ packaging output
 ```
 
-部分接收器的接口包含键盘用途，macOS 会要求 **输入监控** 权限；未授权且读不到任何设备时，界面会给出提示和跳转按钮。
+The packaging scripts build a universal binary for Apple silicon and Intel Macs. The version comes from `Resources/Info.plist`. Open the DMG and drag MouseMeter into Applications to install it.
 
-DMG 中包含 MouseMeter.app 和 Applications 快捷方式，拖入即可安装。版本号取自 `Resources/Info.plist`。App 和 DMG 默认使用本机钥匙串中的 `Flick Self-Signed Code Signing` 自签名证书，未进行 Apple 公证。可通过 `make dmg SIGN_IDENTITY="证书名称或 SHA-1"` 指定其他证书；钥匙串中缺少对应私钥时构建会失败。
+By default, both the app and DMG are signed with `Flick Self-Signed Code Signing`. This certificate is specific to the original development environment; builds fail if the signing identity and its private key are unavailable. Specify your own identity with:
 
-Dock / Finder 图标源文件为 `Resources/AppIcon.png`，打包时自动生成各尺寸及 `AppIcon.icns`。
-
-## 架构
-
+```bash
+make dmg SIGN_IDENTITY="Your Code Signing Identity"
 ```
-Sources/MouseMeter
-├── App/            入口、AppDelegate
-├── Core/
-│   ├── MouseDevice.swift          统一的设备模型（电量、DPI、连接方式…）
-│   ├── MouseDeviceProvider.swift  数据源协议 + ProviderRegistry
-│   ├── DeviceMonitor.swift        定时刷新、跨数据源去重、离线保留、低电量提醒
-│   └── AppSettings.swift
+
+For a local ad hoc signed build, you can use `make app SIGN_IDENTITY=-`. The scripts do not perform Apple notarization.
+
+For development or protocol debugging:
+
+```bash
+swift run MouseMeter
+swift run MouseMeter --dump  # Prints device readings once, then exits
+```
+
+Running through `swift run` does not create an app bundle; notifications and launch at login are unavailable in this mode.
+
+## Permissions
+
+Some receiver interfaces include keyboard usages and require **Input Monitoring** permission. If device detection is blocked, enable MouseMeter in **System Settings → Privacy & Security → Input Monitoring**. The app provides a shortcut when it detects a permission issue.
+
+Allow notifications to receive low battery alerts. Launch at login can be enabled in the app settings when running the packaged app.
+
+## Project structure
+
+```text
+Sources/MouseMeter/
+├── App/          App entry point and lifecycle
+├── Core/         Device model, provider registry, monitoring, and settings
 ├── Providers/
-│   ├── HIDPP/      罗技 HID++：Channel（IOKit 收发）→ Device（feature 解析）→ Provider
-│   └── Bluetooth/  IORegistry BatteryPercent
-└── UI/             菜单栏图标、弹出面板、主窗口、设置
+│   ├── HIDPP/    Logitech HID++ transport and feature parsing
+│   └── Bluetooth/ System Bluetooth battery readings
+└── UI/           Menu bar, overview window, settings, and components
+Resources/        App metadata and icon source
+Scripts/          Icon generation, app packaging, and DMG creation
 ```
 
-UI 只依赖 `MouseDevice`，不感知具体协议。
+The UI consumes the shared `MouseDevice` model. `DeviceMonitor` refreshes providers, deduplicates devices, retains offline readings, and sends low battery notifications.
 
-## 添加新的鼠标协议
+## Adding a device provider
 
-1. 在 `Providers/` 下新建一个类型，实现 `MouseDeviceProvider`：
+1. Add a type under `Sources/MouseMeter/Providers/` conforming to the `@MainActor` protocol `MouseDeviceProvider`.
+2. Implement its identity, display name, priority, lifecycle methods, and `fetchDevices()`. Call `onDevicesChanged` when devices connect or disconnect to request a refresh.
+3. Register the provider in `ProviderRegistry.makeDefault()` in `Core/MouseDeviceProvider.swift`.
+4. Check its readings with `swift run MouseMeter --dump`.
 
-   ```swift
-   @MainActor
-   final class RazerProvider: MouseDeviceProvider {
-       let id = "razer"
-       let displayName = "Razer"
-       let priority = 90                    // 高于通用蓝牙数据源(10)，同名设备以它为准
-       var onDevicesChanged: (() -> Void)?  // 设备插拔时调用，触发立即刷新
+Keep `MouseDevice.id` stable between refreshes and leave unavailable battery or DPI values as `nil`. Devices with the same normalized name (`dedupeKey`) are deduplicated in favor of the provider with the higher priority. Throw `ProviderError.inputMonitoringRequired` when Input Monitoring permission is needed.
 
-       func start() { /* 注册 IOHIDManager 回调等 */ }
-       func stop() {}
+## License
 
-       func fetchDevices() async throws -> [MouseDevice] {
-           // 与设备通信，返回 MouseDevice 数组；读不到的字段（battery / dpi）留 nil 即可
-       }
-   }
-   ```
-
-2. 在 `ProviderRegistry.makeDefault()` 里加上 `RazerProvider()`。
-
-3. `swift run MouseMeter --dump` 验证输出。
-
-约定：
-
-- `MouseDevice.id` 需在多次刷新间稳定，用于保留离线设备和记住菜单栏选中项。
-- 多个数据源识别到同一只鼠标时（按名称归一化后的 `dedupeKey` 判断），保留 `priority` 更高者。
-- 需要用户授权时抛出 `ProviderError.inputMonitoringRequired`，界面会显示引导。
+[MIT](LICENSE) © 2026 zhy2006.
