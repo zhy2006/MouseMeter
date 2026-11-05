@@ -1,12 +1,23 @@
 # MouseMeter
 
-A macOS menu bar app built with Swift and SwiftUI for monitoring mouse battery levels and DPI. Supports compatible Logitech HID++ mice and Bluetooth mice that expose battery information, with English, Simplified Chinese, and Japanese interfaces.
+A macOS menu bar app built with Swift and SwiftUI for monitoring mouse battery levels and DPI. Supports battery monitoring for compatible mice across brands, including Logitech HID++ mice and other mice whose battery information is available through macOS. DPI monitoring is available for supported Logitech HID++ devices. The interface supports English, Simplified Chinese, and Japanese.
 
 [简体中文](docs/README.zh-CN.md)
 
 ![MouseMeter in English](docs/images/overview-en.png)
 
 *The image uses synthetic demo data.*
+
+## Device compatibility
+
+MouseMeter supports compatible mice from multiple brands through two data sources:
+
+| Data source | Compatible devices | Battery | DPI |
+| --- | --- | --- | --- |
+| Logitech HID++ | Compatible Logitech mice connected via a receiver, USB, or Bluetooth | When exposed by the device | When exposed by the device |
+| macOS battery information | Magic Mouse and other brands’ mice whose battery level is exposed through macOS IORegistry (`BatteryPercent`), including compatible Bluetooth mice | When available through macOS | Not supported |
+
+Other brands do not need to use Logitech HID++ for battery monitoring: MouseMeter reads the battery information provided by macOS. HID++ is a Logitech-specific protocol, and the current DPI implementation uses it. Compatibility depends on the model, connection method, and data exposed by macOS; support for one device does not guarantee support for every model from that brand.
 
 ## Menu bar
 
