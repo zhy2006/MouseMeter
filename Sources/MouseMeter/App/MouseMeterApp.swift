@@ -4,6 +4,7 @@ import SwiftUI
 
 @main
 struct MouseMeterApp: App {
+    @AppStorage(SettingsKey.language) private var language = AppLanguage.system.rawValue
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
@@ -11,9 +12,14 @@ struct MouseMeterApp: App {
             MenuBarPanel()
                 .environmentObject(appDelegate.monitor)
                 .environmentObject(appDelegate.navigation)
+                .environmentObject(appDelegate.updater)
+                .environment(\.locale, L10n.locale)
+                .id(language)
         } label: {
             MenuBarLabel()
                 .environmentObject(appDelegate.monitor)
+                .environment(\.locale, L10n.locale)
+                .id(language)
         }
         .menuBarExtraStyle(.window)
 
@@ -21,6 +27,9 @@ struct MouseMeterApp: App {
             MainWindowView()
                 .environmentObject(appDelegate.monitor)
                 .environmentObject(appDelegate.navigation)
+                .environmentObject(appDelegate.updater)
+                .environment(\.locale, L10n.locale)
+                .id(language)
         }
         .defaultSize(width: 880, height: 600)
         .windowResizability(.contentMinSize)
@@ -32,6 +41,7 @@ struct MouseMeterApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let monitor = DeviceMonitor(providers: ProviderRegistry.makeDefault())
     let navigation = AppNavigation()
+    let updater = UpdateManager()
 
     override init() {
         SettingsKey.registerDefaults()
@@ -45,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         monitor.start()
+        updater.start()
         Notifier.requestAuthorization()
     }
 
@@ -57,12 +68,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         monitor.providers.forEach { $0.start() }
         Task {
             await monitor.refresh()
-            if monitor.needsInputMonitoringPermission { print("需要输入监控权限") }
-            if monitor.devices.isEmpty { print("未发现设备") }
+            if monitor.needsInputMonitoringPermission { print(L10n.text("需要输入监控权限")) }
+            if monitor.devices.isEmpty { print(L10n.text("未发现设备")) }
             for device in monitor.devices {
                 print(device.name, "|", device.vendor, device.connection.title, device.protocolName)
-                print("  电量:", device.battery.map { "\($0.percentText) \($0.state.title)" } ?? "-")
-                print("  DPI :", device.dpi.map { "\($0.displayText) 默认 \($0.defaultValue ?? 0) 范围 \($0.range.map { "\($0)" } ?? "-")" } ?? "-")
+                print(L10n.text("dump_battery"), device.battery.map { "\($0.percentText) \($0.state.title)" } ?? "-")
+                print("  DPI :", device.dpi.map { L10n.format("dump_dpi", $0.displayText, $0.defaultValue ?? 0, $0.range.map { "\($0)" } ?? "-") } ?? "-")
             }
             exit(0)
         }

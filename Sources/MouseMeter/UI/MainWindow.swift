@@ -18,22 +18,22 @@ struct MainWindowView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $navigation.selection) {
-                Section("设备") {
+                Section(L10n.text("设备")) {
                     if monitor.devices.isEmpty {
-                        Text("暂无设备").foregroundStyle(.tertiary)
+                        Text(L10n.text("暂无设备")).foregroundStyle(.tertiary)
                     }
                     ForEach(monitor.devices) { device in
                         SidebarDeviceRow(device: device)
                             .tag(SidebarItem.device(device.id))
                             .contextMenu {
                                 if !device.isOnline {
-                                    Button("移除此离线设备") { monitor.forget(device) }
+                                    Button(L10n.text("移除此离线设备")) { monitor.forget(device) }
                                 }
                             }
                     }
                 }
-                Section("通用") {
-                    Label("设置", systemImage: "gearshape").tag(SidebarItem.settings)
+                Section(L10n.text("通用")) {
+                    Label(L10n.text("设置"), systemImage: "gearshape").tag(SidebarItem.settings)
                 }
             }
             .navigationSplitViewColumnWidth(min: 210, ideal: 230)
@@ -89,7 +89,7 @@ private struct SidebarDeviceRow: View {
             DeviceAvatar(device: device, size: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(device.name).lineLimit(1)
-                Text(device.isOnline ? device.connection.title : "离线")
+                Text(device.isOnline ? device.connection.title : L10n.text("离线"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -149,12 +149,12 @@ struct DeviceDetailContent: View {
                 Text(device.name)
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                 HStack(spacing: 6) {
-                    Pill(text: device.vendor, symbol: "building.2")
+                    Pill(text: L10n.text(device.vendor), symbol: "building.2")
                     Pill(text: device.connection.title, symbol: device.connection.symbol, tint: .blue)
                     if device.isOnline {
-                        Pill(text: "在线", symbol: "circle.fill", tint: .green)
+                        Pill(text: L10n.text("在线"), symbol: "circle.fill", tint: .green)
                     } else {
-                        Pill(text: "离线 · 显示上次读数", symbol: "moon.zzz.fill", tint: .orange)
+                        Pill(text: L10n.text("离线 · 显示上次读数"), symbol: "moon.zzz.fill", tint: .orange)
                     }
                 }
             }
@@ -164,7 +164,7 @@ struct DeviceDetailContent: View {
 
     private var batteryCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            CardTitle(title: "电量", symbol: "battery.100percent")
+            CardTitle(title: L10n.text("电量"), symbol: "battery.100percent")
             VStack(spacing: 14) {
                 BatteryRing(battery: device.battery, size: 130, lineWidth: 12)
                 VStack(spacing: 4) {
@@ -173,19 +173,19 @@ struct DeviceDetailContent: View {
                             .font(.headline)
                             .foregroundStyle(battery.tint)
                         if battery.isEstimated {
-                            Text("设备只上报电压或电量档位，百分比为估算值")
+                            Text(L10n.text("设备只上报电压或电量档位，百分比为估算值"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                         if let voltage = battery.voltage {
-                            Text("电压 \(String(format: "%.2f", Double(voltage) / 1000)) V")
+                            Text(L10n.format("voltage", String(format: "%.2f", Double(voltage) / 1000)))
                                 .font(.caption.monospacedDigit())
                                 .foregroundStyle(.secondary)
                         }
                     } else {
-                        Text(device.connection == .usb ? "有线供电" : "未读取到电量")
+                        Text(device.connection == .usb ? L10n.text("有线供电") : L10n.text("未读取到电量"))
                             .font(.headline)
-                        Text(device.connection == .usb ? "该设备没有电池或未上报电量" : "当前协议不支持读取电量")
+                        Text(device.connection == .usb ? L10n.text("该设备没有电池或未上报电量") : L10n.text("当前协议不支持读取电量"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -214,7 +214,7 @@ struct DeviceDetailContent: View {
                         .foregroundStyle(.secondary)
                 }
                 if let defaultValue = dpi.defaultValue {
-                    Text("默认 \(defaultValue) DPI")
+                    Text(L10n.format("default_dpi", defaultValue))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -226,7 +226,7 @@ struct DeviceDetailContent: View {
                     Image(systemName: "scope")
                         .font(.system(size: 36, weight: .light))
                         .foregroundStyle(.tertiary)
-                    Text("当前协议无法读取 DPI")
+                    Text(L10n.text("当前协议无法读取 DPI"))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -240,15 +240,15 @@ struct DeviceDetailContent: View {
 
     private var infoCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            CardTitle(title: "设备信息", symbol: "info.circle")
+            CardTitle(title: L10n.text("设备信息"), symbol: "info.circle")
             Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 10) {
-                infoRow("厂商", device.vendor)
+                infoRow(L10n.text("厂商"), L10n.text(device.vendor))
                 if let vendorID = device.vendorID {
                     infoRow("VID / PID", String(format: "%04X / %04X", vendorID, device.productID ?? 0))
                 }
-                infoRow("连接方式", device.connection.title)
-                infoRow("数据来源", device.protocolName)
-                infoRow("最近读取", device.lastUpdated.formatted(date: .abbreviated, time: .standard))
+                infoRow(L10n.text("连接方式"), device.connection.title)
+                infoRow(L10n.text("数据来源"), L10n.text(device.protocolName))
+                infoRow(L10n.text("最近读取"), device.lastUpdated.formatted(.dateTime.year().month().day().hour().minute().second().locale(L10n.locale)))
             }
             .font(.callout)
         }

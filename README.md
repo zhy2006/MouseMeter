@@ -20,7 +20,7 @@ A macOS menu bar app for monitoring mouse battery levels and DPI, built with Swi
 | Logitech HID++ 2.0 | Compatible Logitech mice over Lightspeed, Unifying, or Bolt receivers, USB, or direct Bluetooth | Yes, via `0x1004`, `0x1000`, or `0x1001` | Yes, via `0x2202` or `0x2201` |
 | System Bluetooth battery data | Magic Mouse and other mice exposing battery information through macOS IORegistry | Yes | No |
 
-Available readings depend on the features exposed by each device and connection. Protocol support does not guarantee compatibility with every model. MouseMeter displays DPI; it does not change it. The current app interface is in Simplified Chinese.
+Available readings depend on the features exposed by each device and connection. Protocol support does not guarantee compatibility with every model. MouseMeter displays DPI; it does not change it. The interface supports Simplified Chinese, English, and Japanese. It follows the system language by default; select a language in Settings to apply it immediately. Unsupported system languages fall back to English.
 
 ## Requirements
 
@@ -85,6 +85,14 @@ Export the identity from Keychain Access, then copy its encoded contents using `
 
 For a local single-architecture package, use `ARCH=x86_64 make dmg` or `ARCH=arm64 make dmg` (with your signing identity as needed). Without `ARCH`, local builds remain universal.
 
+## In-app updates
+
+MouseMeter checks `zhy2006/MouseMeter` GitHub Releases on startup when the last successful check is at least 6 hours old, then checks periodically while running. Only stable releases newer than the installed version are offered. A menu bar panel link opens the update settings; you can also check manually or disable automatic checks there.
+
+Choose **Download Update and Restart** to download the matching x64 or arm64 DMG, verify its size and GitHub SHA-256 digest when available, and validate the app version, macOS compatibility, and code signature against the current app's signing certificate. The updater stages the replacement before quitting, replaces the app, and relaunches it. A failed replacement restores the previous app when possible. Your settings remain in UserDefaults.
+
+Updates require a packaged `.app` in a writable location, such as `/Applications` or `~/Applications`; updating from a mounted DMG or `swift run` is unsupported. Keep using the same Flick certificate and private key for future releases. Changing the signing identity or using an ad hoc build requires a manual installation from the Releases page.
+
 ## Permissions
 
 Some receiver interfaces include keyboard usages and require **Input Monitoring** permission. If device detection is blocked, enable MouseMeter in **System Settings → Privacy & Security → Input Monitoring**. The app provides a shortcut when it detects a permission issue.
@@ -97,6 +105,7 @@ Allow notifications to receive low battery alerts. Launch at login can be enable
 Sources/MouseMeter/
 ├── App/          App entry point and lifecycle
 ├── Core/         Device model, provider registry, monitoring, and settings
+├── Updates/      GitHub release checks, validation, and installation
 ├── Providers/
 │   ├── HIDPP/    Logitech HID++ transport and feature parsing
 │   └── Bluetooth/ System Bluetooth battery readings

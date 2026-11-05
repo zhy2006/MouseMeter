@@ -26,8 +26,8 @@ struct MenuBarLabel: View {
     }
 
     private func accessibilityText(for device: MouseDevice?) -> String {
-        guard let device else { return "MouseMeter：未发现鼠标" }
-        if let battery = device.battery { return "\(device.name) 电量 \(battery.percent)%" }
+        guard let device else { return L10n.text("MouseMeter：未发现鼠标") }
+        if let battery = device.battery { return L10n.format("battery_accessibility", device.name, battery.percent) }
         return device.name
     }
 }

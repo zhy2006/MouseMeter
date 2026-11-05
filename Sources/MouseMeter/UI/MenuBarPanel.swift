@@ -4,6 +4,7 @@ import SwiftUI
 struct MenuBarPanel: View {
     @EnvironmentObject private var monitor: DeviceMonitor
     @EnvironmentObject private var navigation: AppNavigation
+    @EnvironmentObject private var updater: UpdateManager
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
@@ -27,6 +28,15 @@ struct MenuBarPanel: View {
                 }
             }
 
+            if let update = updater.availableUpdate {
+                Divider()
+                Button {
+                    open(.settings)
+                } label: {
+                    Label(L10n.format("update_available", update.version), systemImage: "arrow.down.circle")
+                }
+                .buttonStyle(.borderless)
+            }
             Divider()
             footer
         }
@@ -47,14 +57,14 @@ struct MenuBarPanel: View {
     private var footer: some View {
         HStack(spacing: 2) {
             if let lastRefresh = monitor.lastRefresh {
-                Text("更新于 \(lastRefresh.formatted(date: .omitted, time: .shortened))")
+                Text(L10n.format("updated_at", lastRefresh.formatted(.dateTime.hour().minute().locale(L10n.locale))))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            footerButton("打开主界面", symbol: "macwindow") { open(navigation.selection ?? defaultSelection) }
-            footerButton("设置", symbol: "gearshape") { open(.settings) }
-            footerButton("退出", symbol: "power") { NSApp.terminate(nil) }
+            footerButton(L10n.text("打开主界面"), symbol: "macwindow") { open(navigation.selection ?? defaultSelection) }
+            footerButton(L10n.text("设置"), symbol: "gearshape") { open(.settings) }
+            footerButton(L10n.text("退出"), symbol: "power") { NSApp.terminate(nil) }
         }
     }
 
@@ -92,7 +102,7 @@ private struct PanelDeviceRow: View {
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
                 HStack(spacing: 6) {
-                    Label(device.isOnline ? device.connection.title : "离线", systemImage: device.isOnline ? device.connection.symbol : "moon.zzz")
+                    Label(device.isOnline ? device.connection.title : L10n.text("离线"), systemImage: device.isOnline ? device.connection.symbol : "moon.zzz")
                     if let dpi = device.dpi {
                         Text("·")
                         Text("\(dpi.displayText) DPI")
@@ -115,7 +125,7 @@ private struct PanelDeviceRow: View {
             } else {
                 Image(systemName: "powerplug")
                     .foregroundStyle(.tertiary)
-                    .help("未读取到电量")
+                    .help(L10n.text("未读取到电量"))
             }
         }
         .padding(10)
@@ -141,7 +151,7 @@ struct RefreshButton: View {
         }
         .buttonStyle(.borderless)
         .disabled(monitor.isRefreshing)
-        .help("立即刷新")
+        .help(L10n.text("立即刷新"))
     }
 }
 
@@ -155,17 +165,17 @@ struct EmptyDevicesView: View {
             Image(systemName: monitor.needsInputMonitoringPermission ? "lock.shield" : "computermouse")
                 .font(.system(size: compact ? 28 : 48, weight: .light))
                 .foregroundStyle(.tertiary)
-            Text(monitor.needsInputMonitoringPermission ? "需要输入监控权限" : "未发现支持的鼠标")
+            Text(monitor.needsInputMonitoringPermission ? L10n.text("需要输入监控权限") : L10n.text("未发现支持的鼠标"))
                 .font(compact ? .headline : .title3.weight(.semibold))
             Text(monitor.needsInputMonitoringPermission
-                 ? "请在「系统设置 › 隐私与安全性 › 输入监控」中允许 MouseMeter，然后重新打开应用。"
-                 : "请确认鼠标已开机并已连接（接收器、蓝牙或有线）。")
+                 ? L10n.text("请在「系统设置 › 隐私与安全性 › 输入监控」中允许 MouseMeter，然后重新打开应用。")
+                 : L10n.text("请确认鼠标已开机并已连接（接收器、蓝牙或有线）。"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 260)
             if monitor.needsInputMonitoringPermission {
-                Button("打开系统设置") {
+                Button(L10n.text("打开系统设置")) {
                     PermissionHelper.requestInputMonitoring()
                 }
                 .controlSize(compact ? .small : .regular)

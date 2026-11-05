@@ -19,7 +19,7 @@ struct DPIRangeBar: View {
                                 .fill(.primary.opacity(0.5))
                                 .frame(width: 2, height: 12)
                                 .offset(x: proxy.size.width * fraction(of: defaultValue, in: range) - 1)
-                                .help("默认 \(defaultValue) DPI")
+                                .help(L10n.format("default_dpi", defaultValue))
                         }
                     }
                 }

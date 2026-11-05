@@ -132,7 +132,7 @@ final class LogitechHIDPPProvider: MouseDeviceProvider {
             // 没有 0x0005 又没有 DPI 功能的，多半不是鼠标
             if kind == nil, dpi == nil { return nil }
             let battery = try? await device.battery()
-            let name = try await device.name() ?? device.channel.productName ?? "Logitech 设备"
+            let name = try await device.name() ?? device.channel.productName ?? "Logitech Device"
 
             let channel = device.channel
             let connection: ConnectionKind

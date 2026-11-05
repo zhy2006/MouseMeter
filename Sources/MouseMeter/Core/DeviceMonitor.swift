@@ -134,8 +134,8 @@ final class DeviceMonitor: ObservableObject {
             } else if battery.percent <= threshold, !alertedDeviceIDs.contains(device.id) {
                 alertedDeviceIDs.insert(device.id)
                 Notifier.post(
-                    title: "\(device.name) 电量低",
-                    body: "剩余 \(battery.percent)%，请及时充电。"
+                    title: L10n.format("low_battery_title", device.name),
+                    body: L10n.format("low_battery_body", battery.percent)
                 )
             }
         }

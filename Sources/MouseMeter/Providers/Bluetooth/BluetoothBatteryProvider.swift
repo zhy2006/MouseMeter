@@ -6,7 +6,7 @@ import IOKit
 @MainActor
 final class BluetoothBatteryProvider: MouseDeviceProvider {
     let id = "system.battery"
-    let displayName = "系统蓝牙电量"
+    var displayName: String { L10n.text("系统蓝牙电量") }
     let priority = 10
     var onDevicesChanged: (() -> Void)?
 
@@ -58,7 +58,7 @@ final class BluetoothBatteryProvider: MouseDeviceProvider {
             battery: BatteryStatus(percent: min(100, max(0, percent)), state: Self.chargeState(from: properties)),
             dpi: nil,
             providerID: id,
-            protocolName: "HID 电量服务"
+            protocolName: "HID Battery Service"
         )
     }
 
@@ -83,7 +83,7 @@ final class BluetoothBatteryProvider: MouseDeviceProvider {
         case 0x046D: "Logitech"
         case 0x1532: "Razer"
         case 0x1038: "SteelSeries"
-        default: "未知厂商"
+        default: "Unknown Manufacturer"
         }
     }
 }

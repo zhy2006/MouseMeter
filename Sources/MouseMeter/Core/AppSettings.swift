@@ -2,6 +2,9 @@ import Foundation
 
 /// UserDefaults 键与默认值。视图里用 `@AppStorage(SettingsKey.xxx)` 读写。
 enum SettingsKey {
+    static let automaticallyCheckUpdates = "automaticallyCheckUpdates"
+    static let lastUpdateCheck = "lastUpdateCheck"
+    static let language = "appLanguage"
     static let refreshInterval = "refreshInterval"
     static let menuBarShowsPercent = "menuBarShowsPercent"
     static let menuBarShowsDPI = "menuBarShowsDPI"
@@ -11,6 +14,8 @@ enum SettingsKey {
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
+            language: AppLanguage.system.rawValue,
+            automaticallyCheckUpdates: true,
             refreshInterval: 60.0,
             menuBarShowsPercent: true,
             menuBarShowsDPI: false,
@@ -31,6 +36,6 @@ enum RefreshInterval: Double, CaseIterable, Identifiable {
     var id: Double { rawValue }
 
     var title: String {
-        rawValue < 60 ? "\(Int(rawValue)) 秒" : "\(Int(rawValue / 60)) 分钟"
+        rawValue < 60 ? L10n.format("seconds", Int(rawValue)) : L10n.format("minutes", Int(rawValue / 60))
     }
 }

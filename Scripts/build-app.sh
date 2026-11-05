@@ -21,11 +21,14 @@ case "${ARCH:-universal}" in
     *) echo "不支持的架构: $ARCH" >&2; exit 1 ;;
 esac
 swift build -c release "${ARCH_ARGS[@]}"
-BIN="$(swift build -c release "${ARCH_ARGS[@]}" --show-bin-path)/MouseMeter"
+BIN_DIR="$(swift build -c release "${ARCH_ARGS[@]}" --show-bin-path)"
+BIN="$BIN_DIR/MouseMeter"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/MouseMeter"
+# L10n loads the SwiftPM resource bundle from the app resource directory.
+cp -R "$BIN_DIR/MouseMeter_MouseMeter.bundle" "$APP/Contents/Resources/"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP/Contents/Info.plist"

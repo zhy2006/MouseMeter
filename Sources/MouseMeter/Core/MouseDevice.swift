@@ -32,10 +32,10 @@ enum ConnectionKind: String, Sendable {
 
     var title: String {
         switch self {
-        case .usb: "有线 USB"
-        case .bluetooth: "蓝牙"
-        case .receiver: "无线接收器"
-        case .unknown: "未知"
+        case .usb: L10n.text("有线 USB")
+        case .bluetooth: L10n.text("蓝牙")
+        case .receiver: L10n.text("无线接收器")
+        case .unknown: L10n.text("未知")
         }
     }
 
@@ -55,10 +55,10 @@ struct BatteryStatus: Equatable, Sendable {
 
         var title: String {
             switch self {
-            case .discharging: "使用电池"
-            case .charging: "正在充电"
-            case .full: "已充满"
-            case .unknown: "状态未知"
+            case .discharging: L10n.text("使用电池")
+            case .charging: L10n.text("正在充电")
+            case .full: L10n.text("已充满")
+            case .unknown: L10n.text("状态未知")
             }
         }
     }
