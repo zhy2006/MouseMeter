@@ -17,12 +17,15 @@ cp "$BIN" "$APP/Contents/MacOS/MouseMeter"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 
 ICON_TMP="$(mktemp -d)"
+trap 'rm -rf "$ICON_TMP"' EXIT
 swift Scripts/make-icon.swift "$ICON_TMP"
 iconutil -c icns "$ICON_TMP/AppIcon.iconset" -o "$APP/Contents/Resources/AppIcon.icns"
 rm -rf "$ICON_TMP"
 
-# ad-hoc 签名：输入监控授权与登录项都依赖稳定的代码签名
-codesign --force --deep --sign - "$APP"
+# 使用本机 Flick 证书，保持更新前后的签名身份一致。
+SIGN_IDENTITY="${SIGN_IDENTITY:-Flick Self-Signed Code Signing}"
+codesign --force --sign "$SIGN_IDENTITY" "$APP"
+codesign --verify --deep --strict "$APP"
 
 echo "✅ 已生成 $APP"
 

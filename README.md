@@ -18,14 +18,20 @@ macOS 菜单栏鼠标电量 / DPI 查看工具。
 需要 macOS 15+、Xcode 16+（Swift 6 工具链）。
 
 ```bash
-Scripts/build-app.sh            # 生成 build/MouseMeter.app（通用二进制，ad-hoc 签名）
-Scripts/build-app.sh --install  # 同时安装到 /Applications
+make dmg      # 生成 build/MouseMeter-1.0.0.dmg（默认目标，亦可直接 make）
+make app      # 生成 build/MouseMeter.app（通用二进制，Flick 证书签名）
+make install  # 构建并安装到 /Applications
+make clean    # 清理打包产物
 
 swift run MouseMeter            # 开发时直接运行（无 bundle，通知与登录项不可用）
 swift run MouseMeter --dump     # 读取一次并在终端打印所有设备，调试协议用
 ```
 
 部分接收器的接口包含键盘用途，macOS 会要求 **输入监控** 权限；未授权且读不到任何设备时，界面会给出提示和跳转按钮。
+
+DMG 中包含 MouseMeter.app 和 Applications 快捷方式，拖入即可安装。版本号取自 `Resources/Info.plist`。App 和 DMG 默认使用本机钥匙串中的 `Flick Self-Signed Code Signing` 自签名证书，未进行 Apple 公证。可通过 `make dmg SIGN_IDENTITY="证书名称或 SHA-1"` 指定其他证书；钥匙串中缺少对应私钥时构建会失败。
+
+Dock / Finder 图标源文件为 `Resources/AppIcon.png`，打包时自动生成各尺寸及 `AppIcon.icns`。
 
 ## 架构
 
