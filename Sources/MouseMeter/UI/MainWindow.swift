@@ -40,7 +40,16 @@ struct MainWindowView: View {
         } detail: {
             detail
                 .toolbar {
+                    #if compiler(>=6.2)
+                    if #available(macOS 26.0, *) {
+                        ToolbarItem(placement: .primaryAction) { RefreshButton() }
+                            .sharedBackgroundVisibility(.hidden)
+                    } else {
+                        ToolbarItem(placement: .primaryAction) { RefreshButton() }
+                    }
+                    #else
                     ToolbarItem(placement: .primaryAction) { RefreshButton() }
+                    #endif
                 }
         }
         .frame(minWidth: 760, minHeight: 520)

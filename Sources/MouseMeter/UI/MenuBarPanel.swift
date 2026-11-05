@@ -148,10 +148,14 @@ struct RefreshButton: View {
         } label: {
             Image(systemName: "arrow.clockwise")
                 .symbolEffect(.rotate, isActive: monitor.isRefreshing)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
         .disabled(monitor.isRefreshing)
         .help(L10n.text("立即刷新"))
+        .accessibilityLabel(L10n.text("立即刷新"))
     }
 }
 
