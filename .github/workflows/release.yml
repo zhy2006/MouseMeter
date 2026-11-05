@@ -19,6 +19,8 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validate signing identity selection
+        run: bash Tests/Release/test-signing-selection.sh
       - name: Read and validate VERSION
         id: version
         shell: bash
@@ -48,41 +50,30 @@ jobs:
             label: arm64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
-    env:
-      SIGN_IDENTITY: Flick Self-Signed Code Signing
     steps:
       - uses: actions/checkout@v4
       - name: Import Flick signing certificate
+        id: signing
+        timeout-minutes: 3
         env:
-          CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: bash Scripts/import-certificate.sh
+      - name: Verify signing access
+        timeout-minutes: 1
+        env:
+          SIGN_IDENTITY: ${{ steps.signing.outputs.identity }}
         shell: bash
         run: |
-          if [[ -z "$CERTIFICATE_BASE64" || -z "$CERTIFICATE_PASSWORD" ]]; then
-            echo "Configure MACOS_CERTIFICATE_P12_BASE64 and MACOS_CERTIFICATE_PASSWORD secrets" >&2
-            exit 1
-          fi
-          certificate_path="$RUNNER_TEMP/flick.p12"
-          keychain_path="$RUNNER_TEMP/signing.keychain-db"
-          keychain_password="$(openssl rand -hex 32)"
-          echo "::add-mask::$keychain_password"
-          printf '%s' "$CERTIFICATE_BASE64" | base64 --decode > "$certificate_path"
-          security create-keychain -p "$keychain_password" "$keychain_path"
-          security set-keychain-settings -lut 21600 "$keychain_path"
-          security unlock-keychain -p "$keychain_password" "$keychain_path"
-          security import "$certificate_path" -P "$CERTIFICATE_PASSWORD" \
-            -k "$keychain_path" -T /usr/bin/codesign -T /usr/bin/security
-          security set-key-partition-list -S apple-tool:,apple:,codesign: \
-            -s -k "$keychain_password" "$keychain_path" > /dev/null
-          security list-keychains -d user -s "$keychain_path"
-          # Trust the self-signed Flick certificate on this disposable runner.
-          security find-certificate -c "$SIGN_IDENTITY" -p "$keychain_path" > "$RUNNER_TEMP/flick.pem"
-          security add-trusted-cert -r trustRoot -p codeSign \
-            -k "$keychain_path" "$RUNNER_TEMP/flick.pem"
-          rm -f "$certificate_path"
+          probe="$RUNNER_TEMP/flick-signing-probe"
+          cp /usr/bin/true "$probe"
+          /usr/bin/codesign --force --sign "$SIGN_IDENTITY" "$probe"
+          /usr/bin/codesign --verify --strict "$probe"
+          rm -f "$probe"
       - name: Build and verify DMG
         env:
           ARCH: ${{ matrix.arch }}
+          SIGN_IDENTITY: ${{ steps.signing.outputs.identity }}
         run: |
           make dmg
           lipo build/MouseMeter.app/Contents/MacOS/MouseMeter -verify_arch "$ARCH"
@@ -97,10 +88,10 @@ jobs:
         if: ${{ always() }}
         shell: bash
         run: |
-          if [[ -f "$RUNNER_TEMP/signing.keychain-db" ]]; then
-            security delete-keychain "$RUNNER_TEMP/signing.keychain-db"
+          if [[ -f "$RUNNER_TEMP/mousemeter-signing.keychain-db" ]]; then
+            security delete-keychain "$RUNNER_TEMP/mousemeter-signing.keychain-db"
           fi
-          rm -f "$RUNNER_TEMP/flick.p12" "$RUNNER_TEMP/flick.pem"
+          rm -f "$RUNNER_TEMP/mousemeter-signing.p12" "$RUNNER_TEMP/mousemeter-signing.pem" "$RUNNER_TEMP/flick-signing-probe"
 
   release:
     needs: [version, build]
