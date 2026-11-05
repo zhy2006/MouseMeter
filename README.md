@@ -8,6 +8,16 @@ A macOS menu bar app built with Swift and SwiftUI for monitoring mouse battery l
 
 *The image uses synthetic demo data.*
 
+## Menu bar
+
+![MouseMeter in a full-width macOS menu bar with its panel open](docs/images/menubar-en.png)
+
+*Rendered illustration with sample data, a simulated macOS menu bar, and the actual MouseMeter panel. Battery percentage and DPI are both enabled here.*
+
+The menu bar shows a battery icon and, by default, the battery percentage. In Settings, you can choose which mouse to display and toggle the percentage and DPI display.
+
+Click the menu bar icon to see device battery levels, connection status, and available DPI readings. Click a device to open its details. The panel also provides buttons to refresh readings, open the main window or Settings, and quit. Closing the main window keeps MouseMeter running in the menu bar.
+
 ## Build and package
 
 Requires macOS 15 or later and Xcode 16 or later with Swift 6. Run from the project root:
