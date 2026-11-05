@@ -39,7 +39,7 @@ make install  # 构建并复制到 /Applications
 make clean    # 清理 build/ 下的打包产物
 ```
 
-打包脚本生成适用于 Apple 芯片和 Intel Mac 的通用二进制。版本号取自 `Resources/Info.plist`。打开 DMG 后，将 MouseMeter 拖入 Applications 即可安装。
+打包脚本生成适用于 Apple 芯片和 Intel Mac 的通用二进制。版本号取自根目录的 `VERSION` 文件，打包时自动写入应用元数据。打开 DMG 后，将 MouseMeter 拖入 Applications 即可安装。
 
 App 和 DMG 默认使用 `Flick Self-Signed Code Signing` 签名。该证书属于原开发环境；本机缺少对应签名身份或私钥时，构建会失败。可以指定自己的签名身份：
 
@@ -57,6 +57,33 @@ swift run MouseMeter --dump  # 读取并打印一次设备数据，然后退出
 ```
 
 通过 `swift run` 运行不会创建 App bundle，此模式下通知和登录时启动不可用。
+
+## GitHub Release 发布
+
+`Release macOS` 工作流会在推送 `v1.0.0` 这样的版本 tag 时运行。先提交与 tag 对应的 `VERSION` 文件（内容为 `1.0.0`），再创建并推送 tag：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+工作流会在构建前校验 tag 与 `VERSION` 一致。发布的 `v1.0.0` 包含：
+
+- `MouseMeter-1.0.0-x64.dmg`：适用于 Intel Mac。
+- `MouseMeter-1.0.0-arm64.dmg`：适用于 Apple 芯片 Mac。
+
+CI 使用 `Flick Self-Signed Code Signing` 为 App 和 DMG 签名，不执行 Apple 公证。请配置以下仓库 Actions Secrets：
+
+| Secret 名称 | 内容 |
+| --- | --- |
+| `MACOS_CERTIFICATE_P12_BASE64` | Flick 证书及其**私钥**导出为 `.p12` 后的 Base64 内容 |
+| `MACOS_CERTIFICATE_PASSWORD` | 导出 `.p12` 时设置的密码 |
+
+在“钥匙串访问”中导出签名身份后，执行 `base64 < Flick.p12 | pbcopy` 复制编码内容。工作流自动生成临时钥匙串密码，构建失败时也会执行钥匙串和证书文件清理。
+
+工作流使用仓库内置的 `GITHUB_TOKEN`，仓库策略需允许其写入 Release 和删除 Actions 产物。发布成功后自动删除本次临时构建产物；发布失败时，产物保留期为 1 天。不上传构建缓存。删除产物减少的是存储占用，不会返还已消耗的构建分钟数。
+
+本地也可以使用 `ARCH=x86_64 make dmg` 或 `ARCH=arm64 make dmg` 构建单一架构安装包（按需指定签名身份）。不指定 `ARCH` 时仍构建通用版本。
 
 ## 权限
 

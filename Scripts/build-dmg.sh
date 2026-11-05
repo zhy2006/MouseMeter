@@ -8,7 +8,14 @@ if [[ ! -d "$APP" ]]; then
     exit 1
 fi
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
-DMG="$ROOT/build/MouseMeter-$VERSION.dmg"
+SUFFIX=""
+case "${ARCH:-universal}" in
+    universal) ;;
+    arm64) SUFFIX="-arm64" ;;
+    x86_64) SUFFIX="-x64" ;;
+    *) echo "不支持的架构: $ARCH" >&2; exit 1 ;;
+esac
+DMG="$ROOT/build/MouseMeter-$VERSION$SUFFIX.dmg"
 STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
 # ditto 保留 bundle 的权限、符号链接和签名资源。

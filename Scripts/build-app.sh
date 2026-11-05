@@ -8,13 +8,27 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP="$ROOT/build/MouseMeter.app"
 cd "$ROOT"
 
-swift build -c release --arch arm64 --arch x86_64
-BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/MouseMeter"
+VERSION="$(tr -d '\r\n' < VERSION)"
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "VERSION 必须为 major.minor.patch 格式" >&2
+    exit 1
+fi
+
+# 默认构建通用二进制；CI 可指定单一架构。
+case "${ARCH:-universal}" in
+    universal) ARCH_ARGS=(--arch arm64 --arch x86_64) ;;
+    arm64|x86_64) ARCH_ARGS=(--arch "$ARCH") ;;
+    *) echo "不支持的架构: $ARCH" >&2; exit 1 ;;
+esac
+swift build -c release "${ARCH_ARGS[@]}"
+BIN="$(swift build -c release "${ARCH_ARGS[@]}" --show-bin-path)/MouseMeter"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/MouseMeter"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP/Contents/Info.plist"
 
 ICON_TMP="$(mktemp -d)"
 trap 'rm -rf "$ICON_TMP"' EXIT

@@ -39,7 +39,7 @@ make install  # Builds and copies the app to /Applications
 make clean    # Removes build/ packaging output
 ```
 
-The packaging scripts build a universal binary for Apple silicon and Intel Macs. The version comes from `Resources/Info.plist`. Open the DMG and drag MouseMeter into Applications to install it.
+The packaging scripts build a universal binary for Apple silicon and Intel Macs. The version comes from the root `VERSION` file and is written into the packaged app metadata. Open the DMG and drag MouseMeter into Applications to install it.
 
 By default, both the app and DMG are signed with `Flick Self-Signed Code Signing`. This certificate is specific to the original development environment; builds fail if the signing identity and its private key are unavailable. Specify your own identity with:
 
@@ -57,6 +57,33 @@ swift run MouseMeter --dump  # Prints device readings once, then exits
 ```
 
 Running through `swift run` does not create an app bundle; notifications and launch at login are unavailable in this mode.
+
+## GitHub Releases
+
+The `Release macOS` workflow runs when a version tag such as `v1.0.0` is pushed. Commit the matching `VERSION` file (`1.0.0`) first, then create and push the tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow verifies that the tag matches `VERSION` before building. Release `v1.0.0` includes:
+
+- `MouseMeter-1.0.0-x64.dmg` for Intel Macs.
+- `MouseMeter-1.0.0-arm64.dmg` for Apple silicon Macs.
+
+CI signs both the app and DMG with `Flick Self-Signed Code Signing` and does not notarize the app. Configure these repository Actions secrets:
+
+| Secret | Value |
+| --- | --- |
+| `MACOS_CERTIFICATE_P12_BASE64` | Base64-encoded `.p12` export of the Flick certificate **including its private key** |
+| `MACOS_CERTIFICATE_PASSWORD` | Password used to protect the exported `.p12` |
+
+Export the identity from Keychain Access, then copy its encoded contents using `base64 < Flick.p12 | pbcopy`. The workflow creates a random password for its temporary keychain and cleans up the keychain and certificate files even if the build fails.
+
+ The workflow uses the repository's built-in `GITHUB_TOKEN`; repository policy must allow it to write releases and delete Actions artifacts. Temporary build artifacts are deleted after successful publication, with a 1-day retention period as a fallback if publication fails. No build cache is uploaded. Deleting artifacts reduces storage usage, not consumed build minutes.
+
+For a local single-architecture package, use `ARCH=x86_64 make dmg` or `ARCH=arm64 make dmg` (with your signing identity as needed). Without `ARCH`, local builds remain universal.
 
 ## Permissions
 
