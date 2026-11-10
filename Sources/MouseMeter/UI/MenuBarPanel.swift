@@ -117,9 +117,16 @@ private struct PanelDeviceRow: View {
 
             if let battery = device.battery {
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(battery.percentText)
-                        .font(.system(size: 15, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(battery.tint)
+                    HStack(spacing: 2) {
+                        if battery.isCharging {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 11, weight: .bold))
+                                .help(battery.state.title)
+                        }
+                        Text(battery.percentText)
+                            .font(.system(size: 15, weight: .bold, design: .rounded).monospacedDigit())
+                    }
+                    .foregroundStyle(battery.tint)
                     BatteryGlyph(percent: battery.percent, isCharging: battery.isCharging, height: 9, fill: battery.tint)
                 }
             } else {

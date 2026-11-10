@@ -50,10 +50,18 @@ struct BatteryGlyph: View {
             .frame(width: width, height: height)
             .overlay {
                 if isCharging {
-                    Image(systemName: "bolt.fill")
+                    // 先在闪电周围挖出一圈缝隙，再画实心闪电：低电量时闪电落在空白处也能看见
+                    let bolt = Image(systemName: "bolt.fill")
                         .font(.system(size: height * 0.85, weight: .black))
-                        .foregroundStyle(.black)
-                        .blendMode(.destinationOut)
+                    ZStack {
+                        ForEach(Self.haloOffsets.indices, id: \.self) { i in
+                            bolt
+                                .foregroundStyle(.black)
+                                .offset(x: Self.haloOffsets[i].width * lineWidth, y: Self.haloOffsets[i].height * lineWidth)
+                                .blendMode(.destinationOut)
+                        }
+                        bolt.foregroundStyle(fill ?? .primary)
+                    }
                 }
             }
             .compositingGroup()
@@ -63,6 +71,13 @@ struct BatteryGlyph: View {
                 .frame(width: lineWidth * 1.5, height: height * 0.36)
         }
     }
+
+    private static let haloOffsets: [CGSize] = [
+        CGSize(width: -1, height: 0), CGSize(width: 1, height: 0),
+        CGSize(width: 0, height: -1), CGSize(width: 0, height: 1),
+        CGSize(width: -0.7, height: -0.7), CGSize(width: 0.7, height: -0.7),
+        CGSize(width: -0.7, height: 0.7), CGSize(width: 0.7, height: 0.7),
+    ]
 }
 
 /// 环形电量仪表
